@@ -65,6 +65,6 @@ public class MainActivity extends AppCompatActivity {
 
 
         mailManager = new MailManager(info.getEmail(), info.getPassword());
-        mailManager.fetchEmails(5);
+        mailManager.fetchEmails();
     }
 }
