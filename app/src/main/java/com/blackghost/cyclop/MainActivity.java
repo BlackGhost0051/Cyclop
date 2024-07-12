@@ -16,6 +16,12 @@ import androidx.core.view.WindowInsetsCompat;
 import com.blackghost.cyclop.Class.Info;
 import com.blackghost.cyclop.Managers.MailManager;
 
+import java.util.List;
+
+import javax.mail.Message;
+import javax.mail.MessagingException;
+import javax.mail.internet.InternetAddress;
+
 public class MainActivity extends AppCompatActivity {
     private EditText inputMail;
     private EditText inputPass;
@@ -59,12 +65,22 @@ public class MainActivity extends AppCompatActivity {
 
                 info.setEmail(email);
                 info.setPassword(password);
+
+
+                /*mailManager = new MailManager(info.getEmail(), info.getPassword());
+                List<Message> unreadMessages = mailManager.getUnreadEmails();
+
+                for(Message message : unreadMessages){
+                    try {
+                        String from = ((InternetAddress) message.getFrom()[0]).getAddress();
+                        String subject = message.getSubject();
+                        Log.d("Messages", "From: " + from + ", Subject: " + subject);
+                    } catch (MessagingException e) {
+                        Log.e("Messages", "Error reading message details.", e);
+                    }
+                }*/
             }
         });
 
-
-
-        mailManager = new MailManager(info.getEmail(), info.getPassword());
-        mailManager.fetchEmails();
     }
 }
