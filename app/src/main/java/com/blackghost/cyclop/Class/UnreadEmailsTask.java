@@ -17,7 +17,7 @@ import javax.mail.PasswordAuthentication;
 import javax.mail.Session;
 import javax.mail.Store;
 
-public class UnreadEmailsTask extends AsyncTask<Void, Void, List<Message>> {
+public class UnreadEmailsTask extends AsyncTask<Void, Void, List<String[]>> {
     private static final String TAG = "UnreadEmailsTask";
     private String username;
     private String password;
@@ -28,56 +28,65 @@ public class UnreadEmailsTask extends AsyncTask<Void, Void, List<Message>> {
     }
 
     @Override
-    protected List<Message> doInBackground(Void... voids) {
-        List<Message> unreadMessages = new ArrayList<>();
-
+    protected List<String[]> doInBackground(Void... voids) {
+        List<String[]> unreadMessages = new ArrayList<>();
         Properties properties = new Properties();
         properties.put("mail.store.protocol", "imaps");
+        properties.put("mail.imaps.host", "imap.gmail.com");
+        properties.put("mail.imaps.port", "993");
+        properties.put("mail.imaps.ssl.enable", "true");
 
-        Session emailSession = Session.getDefaultInstance(properties, new javax.mail.Authenticator() {
+        Session emailSession = Session.getInstance(properties, new javax.mail.Authenticator() {
             protected PasswordAuthentication getPasswordAuthentication() {
                 return new PasswordAuthentication(username, password);
             }
         });
 
+        Folder emailFolder = null;
+        Store store = null;
+
         try {
-            Store store = emailSession.getStore("imaps");
+            store = emailSession.getStore("imaps");
             store.connect("imap.gmail.com", username, password);
 
-            Folder emailFolder = store.getFolder("INBOX");
+            emailFolder = store.getFolder("INBOX");
             emailFolder.open(Folder.READ_ONLY);
 
             Message[] messages = emailFolder.getMessages();
             for (Message message : messages) {
                 if (!message.isSet(Flags.Flag.SEEN)) {
-                    unreadMessages.add(message);
+                    String from = ((javax.mail.internet.InternetAddress) message.getFrom()[0]).getAddress();
+                    String subject = message.getSubject();
+                    unreadMessages.add(new String[]{from, subject});
                 }
             }
 
-            emailFolder.close(false);
-            store.close();
-
         } catch (AuthenticationFailedException e) {
-            Log.e(TAG, "Authentication failed. Check username/password.", e);
+            Log.e(TAG, "Authentication failed. Check " + username + "/" + password, e);
         } catch (NoSuchProviderException e) {
             Log.e(TAG, "No provider for IMAP.", e);
         } catch (MessagingException e) {
             Log.e(TAG, "Error connecting to email server.", e);
+        } finally {
+            try {
+                if (emailFolder != null && emailFolder.isOpen()) {
+                    emailFolder.close(false);
+                }
+                if (store != null) {
+                    store.close();
+                }
+            } catch (MessagingException e) {
+                Log.e(TAG, "Error closing folder/store.", e);
+            }
         }
 
         return unreadMessages;
     }
 
     @Override
-    protected void onPostExecute(List<Message> unreadMessages) {
-        for (Message message : unreadMessages) {
-            try {
-                String from = ((javax.mail.internet.InternetAddress) message.getFrom()[0]).getAddress();
-                String subject = message.getSubject();
-                Log.d("Messages", "From: " + from + ", Subject: " + subject);
-            } catch (MessagingException e) {
-                Log.e("Messages", "Error reading message details.", e);
-            }
+    protected void onPostExecute(List<String[]> unreadMessages) {
+        for (String[] email : unreadMessages) {
+            Log.d("Messages", "From: " + email[0] + ", Subject: " + email[1]);
         }
     }
 }
