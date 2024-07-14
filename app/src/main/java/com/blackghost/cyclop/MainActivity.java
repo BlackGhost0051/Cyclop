@@ -14,6 +14,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.blackghost.cyclop.Class.Info;
+import com.blackghost.cyclop.Class.UnreadEmailsTask;
 import com.blackghost.cyclop.Managers.MailManager;
 
 import java.util.List;
@@ -67,18 +68,7 @@ public class MainActivity extends AppCompatActivity {
                 info.setPassword(password);
 
 
-                /*mailManager = new MailManager(info.getEmail(), info.getPassword());
-                List<Message> unreadMessages = mailManager.getUnreadEmails();
-
-                for(Message message : unreadMessages){
-                    try {
-                        String from = ((InternetAddress) message.getFrom()[0]).getAddress();
-                        String subject = message.getSubject();
-                        Log.d("Messages", "From: " + from + ", Subject: " + subject);
-                    } catch (MessagingException e) {
-                        Log.e("Messages", "Error reading message details.", e);
-                    }
-                }*/
+                new UnreadEmailsTask(info.getEmail(), info.getPassword()).execute();
             }
         });
 
