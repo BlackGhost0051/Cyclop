@@ -8,10 +8,12 @@ import java.util.List;
 import java.util.Properties;
 
 import javax.mail.AuthenticationFailedException;
+import javax.mail.BodyPart;
 import javax.mail.Flags;
 import javax.mail.Folder;
 import javax.mail.Message;
 import javax.mail.MessagingException;
+import javax.mail.Multipart;
 import javax.mail.NoSuchProviderException;
 import javax.mail.PasswordAuthentication;
 import javax.mail.Session;
@@ -55,10 +57,11 @@ public class UnreadEmailsTask extends AsyncTask<Void, Void, List<String[]>> {
             Message[] messages = emailFolder.getMessages();
             for (Message message : messages) {
                 if (!message.isSet(Flags.Flag.SEEN)) {
-                    String from = ((javax.mail.internet.InternetAddress) message.getFrom()[0]).getAddress();
                     String subject = message.getSubject();
-                    if(subject.equals("CYC")){
-                        unreadMessages.add(new String[]{from, subject});
+                    String from = ((javax.mail.internet.InternetAddress) message.getFrom()[0]).getAddress();
+                    if(subject.equals("CYC") /*&& from.equals(username)*/){
+                        String body = getTextFromMessage(message);
+                        unreadMessages.add(new String[]{from, subject, body});
                     }
 
                 }
@@ -70,6 +73,8 @@ public class UnreadEmailsTask extends AsyncTask<Void, Void, List<String[]>> {
             Log.e(TAG, "No provider for IMAP.", e);
         } catch (MessagingException e) {
             Log.e(TAG, "Error connecting to email server.", e);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         } finally {
             try {
                 if (emailFolder != null && emailFolder.isOpen()) {
@@ -89,7 +94,28 @@ public class UnreadEmailsTask extends AsyncTask<Void, Void, List<String[]>> {
     @Override
     protected void onPostExecute(List<String[]> unreadMessages) {
         for (String[] email : unreadMessages) {
-            Log.d("Messages", "From: " + email[0] + ", Subject: " + email[1]);
+            Log.d("Messages", "From: " + email[0] + ", Subject: " + email[1] + ", Body: " + email[2]);
         }
+    }
+
+    private String getTextFromMessage(Message message) throws Exception {
+        if (message.isMimeType("text/plain")) {
+            return message.getContent().toString();
+        } else if (message.isMimeType("multipart/*")) {
+            Multipart multipart = (Multipart) message.getContent();
+            return getTextFromMultipart(multipart);
+        }
+        return "";
+    }
+    private String getTextFromMultipart(Multipart multipart) throws Exception {
+        StringBuilder result = new StringBuilder();
+        int count = multipart.getCount();
+        for (int i = 0; i < count; i++) {
+            BodyPart bodyPart = multipart.getBodyPart(i);
+            if (bodyPart.isMimeType("text/plain")) {
+                result.append(bodyPart.getContent().toString());
+            }
+        }
+        return result.toString();
     }
 }
