@@ -57,7 +57,10 @@ public class UnreadEmailsTask extends AsyncTask<Void, Void, List<String[]>> {
                 if (!message.isSet(Flags.Flag.SEEN)) {
                     String from = ((javax.mail.internet.InternetAddress) message.getFrom()[0]).getAddress();
                     String subject = message.getSubject();
-                    unreadMessages.add(new String[]{from, subject});
+                    if(subject.equals("CYC")){
+                        unreadMessages.add(new String[]{from, subject});
+                    }
+
                 }
             }
 
