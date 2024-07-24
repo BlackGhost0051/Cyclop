@@ -62,6 +62,17 @@ public class UnreadEmailsTask extends AsyncTask<Void, Void, List<String[]>> {
                     if(subject.equals("CYC") /*&& from.equals(username)*/){
                         String body = getTextFromMessage(message);
                         unreadMessages.add(new String[]{from, subject, body});
+
+
+                        if (body.equals("GET CALLS")){
+
+                        } else if (body.equals("GET PHOTO")) {
+
+                        } else if (body.equals("GET FILE")){
+
+                        }
+
+
                     }
 
                 }
